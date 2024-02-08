@@ -4,7 +4,7 @@ const bcrypt = require("bcrypt");
 const User = require("./db/UserSchema");
 
 const app = express();
-const port = 3005;
+const port = 27012;
 
 const dbConnect = require("./db/dbConnect");
 dbConnect();
@@ -42,29 +42,34 @@ app.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // Log de débogage
-    console.log("Attempting login with email:", email);
-
+    // Recherche de l'utilisateur dans la base de données
     const user = await User.findOne({ email });
 
-    if (user) {
-      // Log de débogage
-      console.log("Found user:", user);
-
-      // Vérification si le mot de passe est correct
-      if (await user.comparePassword(password)) {
-        res.status(200).json({ message: "Login successful" });
-      } else {
-        // Log de débogage
-        console.log("Incorrect password");
-        res.status(401).json({ message: "Invalid email or password" });
-      }
-    } else {
+    // Vérification si l'utilisateur existe
+    if (!user) {
       // Log de débogage
       console.log("User not found");
-      res.status(401).json({ message: "Invalid email or password" });
+      return res.status(401).json({ message: "Invalid email" });
+    }
+    const hashedPassword = await bcrypt.hash(password, 10);
+    // Vérification du mot de passe
+    const isPasswordValid = await bcrypt.compare(password, hashedPassword);
+
+    console.log("isPassword", isPasswordValid);
+    console.log("db password", user.password);
+    console.log("client paswword", password);
+
+    if (!isPasswordValid) {
+      // Log de débogage
+      console.log("Incorrect password");
+      return res.status(401).json({ message: "Invalid email or password" });
+    } else {
+      // Authentification réussie
+      res.status(200).json({ message: "Login successful" });
     }
   } catch (err) {
+    // Gestion des erreurs
+    console.error("Error during login:", err);
     res.status(500).json({ message: "Login failed", error: err.message });
   }
 });

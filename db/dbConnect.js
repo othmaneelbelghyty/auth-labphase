@@ -7,6 +7,7 @@ dbConnect = async () => {
     await mongoose.connect(process.env.DB_URL, {
       useNewUrlParser: true,
       useUnifiedTopology: true,
+      socketTimeoutMS: 30000,
     });
     console.log("connect is okkkk!");
   } catch (error) {
@@ -14,5 +15,6 @@ dbConnect = async () => {
     console.log(error);
   }
 };
+
 
 module.exports = dbConnect;
